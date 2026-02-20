@@ -28,6 +28,8 @@ db = SQLAlchemy(app)
 # Create workflow model
 
 class Workflow(db.Model):
+    __tablename__ = "workflow"
+
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(100))
     reportType = db.Column(db.String(100))
@@ -39,6 +41,9 @@ class Workflow(db.Model):
     approver3 = db.Column(db.String(100))
     approver4 = db.Column(db.String(100))
 
+with app.app_context():
+    db.create_all()
+    
 # clean value if any space present
 def clean_value(value):
     if pd.isna(value):
@@ -54,13 +59,13 @@ def upload_excel():
         df.columns = df.columns.str.strip()
 
         # Forward fill blank cells
-        df = df.fillna(method="ffill")
+        df = df.ffill()
 
         print(df.head()) # it will print the column first
 
         # # delete old data 
-        Workflow.query.delete() 
-        db.session.commit()
+        # Workflow.query.delete() 
+        # db.session.commit()
 
         # iterating each row of the excel
         for index,row in df.iterrows():
