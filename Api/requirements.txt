@@ -7,3 +7,31 @@ python-multipart==0.0.20
 altair==5.5.0
 annotated-doc==0.0.3
 # ... rest of your dependencies
+
+
+project/
+│
+├── app.py                  # Main Flask app
+├── .env                    # Environment variables
+├── requirements.txt
+│
+├── models/                 # Database models (SQLAlchemy)
+│   ├── __init__.py
+│   ├── division.py
+│   ├── type.py
+│   ├── report_type.py
+│   └── division_report_access.py
+│
+├── schemas/                # Serialization schemas (Marshmallow)
+│   ├── __init__.py
+│   ├── division_schema.py
+│   ├── type_schema.py
+│   ├── report_type_schema.py
+│   └── division_report_access_schema.py
+│
+└── routes/                 # API endpoints
+    ├── __init__.py
+    └── workflow_routes.py
+
+
+    # Blueprint is used in app.py file so that the definition of the function should be define elsewhere(routes files), helps to make the code clean and reusable 

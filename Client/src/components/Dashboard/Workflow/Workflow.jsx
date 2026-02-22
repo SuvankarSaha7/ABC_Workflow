@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
+
 const divisionOptions = [
   { value: "", label: "--Select--" },
   { value: "corporate", label: "Corporate" },
@@ -17,6 +19,8 @@ const divisionOptions = [
 ];
 
 const Workflow = () => {
+
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     type: "",
     reportType: "",
@@ -24,11 +28,14 @@ const Workflow = () => {
     workflowType: "",
   });
 
+  const handleBack = (e)=>{
+    navigate("/")
+  }
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-  const navigate = useNavigate();
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -151,7 +158,16 @@ const Workflow = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-between">
+          <button
+            onClick={handleBack}
+            className="rounded bg-purple-600 px-8 py-3 font-bold text-white
+                  transition-all duration-200 ease-in-out
+                  hover:bg-purple-800 hover:scale-105 hover:shadow-lg
+                  focus:outline-none focus:ring-2 focus:ring-purple-300"
+          >
+          back
+          </button>
           <button
             type="submit"
             className="rounded bg-purple-600 px-8 py-3 font-bold text-white

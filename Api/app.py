@@ -1,10 +1,10 @@
 import os
-from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+import pandas as pd
+from flask import Flask,request,jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-import pandas as pd
+from extensions import db
+from Models.Workflow import Workflow
 
 # Load .env only for local development
 load_dotenv()
@@ -21,34 +21,16 @@ if not DATABASE_URL:
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
-
-
-
-# Create workflow model
-
-class Workflow(db.Model):
-    __tablename__ = "workflow"
-
-    id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(100))
-    reportType = db.Column(db.String(100))
-    division = db.Column(db.String(100))
-    workflowType = db.Column(db.String(200))
-    initiator = db.Column(db.String(100))
-    approver1 = db.Column(db.String(100))
-    approver2 = db.Column(db.String(100))
-    approver3 = db.Column(db.String(100))
-    approver4 = db.Column(db.String(100))
+db.init_app(app) # bind db with app
 
 with app.app_context():
     db.create_all()
-    
-# clean value if any space present
+
 def clean_value(value):
     if pd.isna(value):
         return None
     return str(value).strip()
+
 
 #Read the excel file
 @app.route("/upload_excel",methods=["POST"])
@@ -86,6 +68,8 @@ def upload_excel():
         return {"Status": "Success", "message": "Data uploaded successfully"}
     except Exception as e:
         return {"Status":"Error","message":str(e)}
+    
+
 
 @app.route("/get_Workflow",methods=["GET"])
 def get_Workflow():
@@ -121,11 +105,8 @@ def get_Workflow():
         return jsonify(result)
     except Exception as e:
         return {"Status": "Error", "message": str(e)}
+
     
-
-
-
-
 @app.route("/")
 def home():
     return "✅ Flask is working excellent!"
