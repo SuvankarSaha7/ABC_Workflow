@@ -1,116 +1,111 @@
-import os
 import pandas as pd
-from flask import Flask,request,jsonify
-from flask_cors import CORS
-from dotenv import load_dotenv
-from extensions import db
-from Models.Workflow import Workflow
+import uvicorn 
+from fastapi import FastAPI,HTTPException , Depends
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from Database.db import SessionLocal, engine 
+import Database_Models.models as models
+import Database_Schema.schema as schema
+
 
 # Load .env only for local development
-load_dotenv()
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI()
 
-# Read DB URL from env
-DATABASE_URL = os.getenv("DATABASE_URL")
+# DEPENDENCY----
+def get_db():
+    db=SessionLocal() # open a new session for this request
+    try:
+        yield db  # give the session to the route function
+    finally:
+        db.close() # always close the session after request is done
+# the above function is basically used in FASTAPI to ensure that every request gets it's own session and it's properly closed
 
-if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL is missing! Add it in Render Environment Variables.")
+# cors to connect client and api
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # ✅ your React app's address
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Create tables
+models.Divisions.metadata.create_all(bind=engine)
 
-db.init_app(app) # bind db with app
-
-with app.app_context():
-    db.create_all()
-
+# ─── HELPER: clean Excel cell values ─────────────────────────────────────────
 def clean_value(value):
     if pd.isna(value):
-        return None
-    return str(value).strip()
+        return None          # turn NaN into None (DB-friendly null)
+    return str(value).strip() # remove extra whitespace
 
 
-#Read the excel file
-@app.route("/upload_excel",methods=["POST"])
-def upload_excel():
+
+# with app.app_context():
+#     db.create_all()
+
+
+
+# First uploading the division excel file
+@app.post("/divisions/seed",response_model=list[schema.DivisionReponse])
+async def seed_divisions(db:Session = Depends(get_db)):
+    # First read the file 
     try:
-        df=pd.read_excel("Wokflow_Corporate.xlsx")
-        # Remove extra spaces from column names
+        df = pd.read_excel("Divisions.xlsx")
+
+        # remove extra space
         df.columns = df.columns.str.strip()
 
-        # Forward fill blank cells
-        df = df.ffill()
+        added = [] # track what we inserted
 
-        print(df.head()) # it will print the column first
+        #iterate through excel row wise
+        for _,row in df.iterrows():
+            #removing white spce and handling NaN
+            division_name = clean_value(row["Division name"])
 
-        # # delete old data 
-        # Workflow.query.delete() 
-        # db.session.commit()
+            if not division_name:
+                continue
+            
+            # check if the divisions is already exists or not
+            existing = db.query(models.Divisions).filter(models.Divisions.division_name == division_name).first()
+            
+            if existing:
+                continue
 
-        # iterating each row of the excel
-        for index,row in df.iterrows():
-            new_record = Workflow(
-                type=clean_value(row["Type"]),
-                reportType=clean_value(row["Report Type"]),
-                division=clean_value(row["Division"]),
-                workflowType=clean_value(row["Workflow Type"]),
-                initiator=clean_value(row["Initiator"]),
-                approver1=clean_value(row["Approver 1"]),
-                approver2=clean_value(row["Approver 2"]),
-                approver3=clean_value(row["Approver 3"]),
-                approver4=clean_value(row["Approver 4"]),
-            )
-            db.session.add(new_record)
-        
-        db.session.commit()
-        return {"Status": "Success", "message": "Data uploaded successfully"}
+            new_division = models.Divisions(division_name = division_name)
+
+            db.add(new_division)
+            added.append(new_division)
+
+        db.commit()
+
+        for division in added:
+            db.refresh(division)
+
+        return added
     except Exception as e:
-        return {"Status":"Error","message":str(e)}
+        db.rollback() # undo everything if any goes wrong 
+        raise HTTPException(status_code=500 , detail =f"Failed to seed division:{str(e)}")
+
+# The fetch the division from backend
+    
+@app.get("/divisions",response_model=list[schema.DivisionReponse])
+# making session for this particular function 
+async def fetch_division(db:Session = Depends(get_db)):
+    
+    divisions = db.query(models.Divisions).all()
+    # select all divisions
+    if not divisions:
+        raise HTTPException(status_code=404 , detail="No division found in the database")
+    return divisions
     
 
 
-@app.route("/get_Workflow",methods=["GET"])
-def get_Workflow():
-    try:
-        type_val=request.args.get("type")
-        report_type=request.args.get("reportType")
-        division=request.args.get("division")
-        workflow_type=request.args.get("workflowType")
-
-        data = Workflow.query.filter(
-            func.lower(Workflow.type) == func.lower(type_val),
-            func.lower(Workflow.reportType) == func.lower(report_type),
-            func.lower(Workflow.division) == func.lower(division),
-            func.lower(Workflow.workflowType) == func.lower(workflow_type)
-        ).all()
-
-        if not data:
-            return {"Status":"not found"},404
-        
-        result=[]
-        for w in data:
-            result.append({
-                "division": w.division,
-                "type": w.type,
-                "reportType": w.reportType,
-                "workflowType": w.workflowType,
-                "initiator": w.initiator,
-                "approver1": w.approver1,
-                "approver2": w.approver2,
-                "approver3": w.approver3,
-                "approver4": w.approver4
-            })
-        return jsonify(result)
-    except Exception as e:
-        return {"Status": "Error", "message": str(e)}
-
     
-@app.route("/")
-def home():
-    return "✅ Flask is working excellent!"
+# @app.route("/")
+# def home():
+#     return "✅ Flask is working excellent!"
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)

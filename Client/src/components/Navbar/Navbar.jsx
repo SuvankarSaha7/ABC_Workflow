@@ -1,11 +1,19 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Itclogo from "../../img/ITC_logo.jpg";
 import { LogIn, LogOut, LayoutDashboard } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 const Navbar = () => {
+  const session = false;
+  const { divisionName} = useParams()
+  const navigate = useNavigate();
+  
+  const handleChange = () => {
+    // window.location.reload();
+    navigate("/");
+  };
   return (
-    <nav className="bg-blue-200 shadow-md mx-6 my-4 rounded-lg px-6 py-4 flex items-center justify-between sticky top-0 z-50 transition-all duration-300  hover:scale-[1.01] hover:shadow-lg ">
+    <nav className="bg-blue-200 shadow-md mx-6 my-3 rounded-lg px-6 py-4 flex items-center justify-between sticky top-0 z-50 transition-all duration-300  hover:scale-[1.01] hover:shadow-lg ">
       {/* Left Section: Logo + Brand */}
       <div className="flex items-center space-x-3">
         <img
@@ -18,21 +26,23 @@ const Navbar = () => {
 
       {/* Right Section: Links */}
       <div className="flex items-center space-x-6 text-gray-700 font-medium">
-        <Link
+  {   divisionName &&   <Link
           to="/"
           className="flex items-center gap-2 hover:text-blue-600 transition-all duration-200"
+          onClick={handleChange}
         >
           <LayoutDashboard size={20} />
           Dashboard
-        </Link>
-
-        <Link
-          to="/login"
-          className="flex items-center gap-2 hover:text-blue-600 transition-all duration-200"
-        >
-          <LogIn size={20} />
-          Login
-        </Link>
+        </Link>}
+        {session && (
+          <Link
+            to="/login"
+            className="flex items-center gap-2 hover:text-blue-600 transition-all duration-200"
+          >
+            <LogIn size={20} />
+            Login
+          </Link>
+        )}
 
         <Link
           to="/logout"
