@@ -19,6 +19,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4",
+    "react-spinners": "^0.17.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

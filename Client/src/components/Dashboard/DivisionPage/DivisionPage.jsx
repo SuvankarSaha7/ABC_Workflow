@@ -1,84 +1,85 @@
+import {
+  FileText,
+  FileTextIcon,
+  ShieldCheck,
+  ShieldCheckIcon,
+  UserCheck,
+  UserCheckIcon,
+  Users,
+  UsersIcon,
+  Workflow,
+  WorkflowIcon,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 const DivisionPage = () => {
-  const { division } = useParams();
-  const location = useLocation();
-  const [data, setData] = useState(null);
+  const { divisionName } = useParams();
 
-  const queryParams = new URLSearchParams(location.search);
-
-  const type = queryParams.get("type");
-  const reportType = queryParams.get("reportType");
-  const workflowType = queryParams.get("workflowType");
-
-  useEffect(() => {
-    fetch(
-      `http://127.0.0.1:5000/get_Workflow?division=${division}&type=${type}&reportType=${reportType}&workflowType=${workflowType}`
-    )
-      .then((res) => res.json())
-      .then((resData) => {
-        setData(resData);
-      })
-      .catch((err) => console.error(err));
-  }, [division, type, reportType, workflowType]);
-
-  if (!data) return <p className="text-center mt-10">Loading...</p>;
-  if (data.length === 0)
-    return <p className="text-center mt-10">No workflow found.</p>;
-
-  const workflow = data[0];
-
-  // Create ordered flow steps
-  const steps = [
-    { label: "Initiator", value: workflow.initiator },
-    { label: "Approver 1", value: workflow.approver1 },
-    { label: "Approver 2", value: workflow.approver2 },
-    { label: "Approver 3", value: workflow.approver3 },
-    { label: "Approver 4", value: workflow.approver4 },
-  ].filter((step) => step.value); // remove empty ones
+  const cards = [
+    {
+      title: "Entitlement",
+      icon: <ShieldCheckIcon size={36} />,
+      color: "from-purple-400 to-indigo-500",
+    },
+    {
+      title: "Policy",
+      icon: <FileTextIcon size={36} />,
+      color: "from-blue-400 to-cyan-500",
+    },
+    {
+      title: "Workflow",
+      icon: <WorkflowIcon size={36} />,
+      color: "from-green-400 to-emerald-500",
+    },
+    {
+      title: "Spocs",
+      icon: <UsersIcon size={36} />,
+      color: "from-pink-400 to-rose-500",
+    },
+    {
+      title: "Approver",
+      icon: <UserCheckIcon size={36} />,
+      color: "from-yellow-400 to-orange-500",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-6">
-      <div className="max-w-7xl mx-auto bg-white shadow-2xl rounded-2xl p-10">
+    <div className="w-full min-h-screen bg-gray-50 p-2">
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h1 className="text-2xl font-bold text-gray-700 uppercase tracking-widest">
+          {divisionName}
+        </h1>
+        <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-indigo-500" />
+      </div>
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-purple-700">
-            Workflow Approval Flow
-          </h1>
-          <p className="text-gray-500 mt-2">
-            {workflow.division} | {workflow.type} | {workflow.reportType}
-          </p>
-        </div>
+      {/* Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 max-w-3xl mx-auto">
+        {cards.map((card, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 p-6 flex flex-col items-center gap-3 cursor-pointer hover:-translate-y-1 transition-all duration-200"
+          >
+            {/* Icon */}
+            <div
+              className={`bg-gradient-to-br ${card.color} text-white rounded-full p-3`}
+            >
+              {card.icon}
+            </div>
 
-        {/* Horizontal Flow Chart */}
-        <div className="flex items-center justify-start overflow-x-auto space-x-6 pb-4">
+            {/* Title */}
+            <p className="text-gray-700 font-semibold text-sm">{card.title}</p>
+          </div>
+        ))}
+      </div>
 
-          {steps.map((step, index) => (
-            <React.Fragment key={index}>
-
-              {/* Step Box */}
-              <div className="min-w-[220px] bg-white border border-purple-200 shadow-lg rounded-xl p-6 text-center hover:shadow-xl transition duration-300">
-                <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-wide">
-                  {step.label}
-                </h3>
-                <p className="mt-3 text-gray-700 font-medium">
-                  {step.value}
-                </p>
-              </div>
-
-              {/* Arrow */}
-              {index !== steps.length - 1 && (
-                <div className="text-4xl text-purple-400 font-light">
-                  →
-                </div>
-              )}
-
-            </React.Fragment>
-          ))}
-
-        </div>
+      <div className="flex justify-end my-8 ">
+        <Link to="/">
+          <button className="bg-purple-500 rounded px-3 py-3 font-bold text-white hover:hover:-translate-y-1 transition-all duration-200">
+            Back to Previous
+          </button>
+        </Link>
       </div>
     </div>
   );

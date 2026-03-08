@@ -10,22 +10,19 @@ import Spocs from "./components/Dashboard/Spocs/Spocs";
 import Approver from "./components/Dashboard/Approver/Approver";
 import DivisionPage from "./components/Dashboard/DivisionPage/DivisionPage";
 
-
-
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
-          <Route path="/workflow" element={<Workflow/>}/>
-          <Route path="/entitlement" element={<Entitlement/>}/>
-          <Route path="/policy" element={<Policy/>}/>
-          <Route path="/spocs" element={<Spocs/>}/>
-          <Route path="/approver" element={<Approver/>}/>
-          <Route path="/:division" element={<DivisionPage/>}/>
-
-          
+          <Route path="/workflow" element={<Workflow />} />
+          <Route path="/entitlement" element={<Entitlement />} />
+          <Route path="/policy" element={<Policy />} />
+          <Route path="/spocs" element={<Spocs />} />
+          <Route path="/approver" element={<Approver />} />
+          {/* the below route is dynamic route */}
+          <Route path="/:divisionName" element={<DivisionPage />} /> 
         </Route>
       </Routes>
     </BrowserRouter>
